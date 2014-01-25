@@ -1,8 +1,8 @@
 <?php
 
 /**
- * File       index.php
- * Created    1/25/14 10:29 AM
+ * File       index2.php
+ * Created    1/25/14 4:56 PM
  * Author     Matt Thomas | matt@betweenbrain.com | http://betweenbrain.com
  * Support    https://github.com/betweenbrain/
  * Copyright  Copyright (C) 2014 betweenbrain llc. All Rights Reserved.
@@ -25,7 +25,7 @@ try
 }
 
 // Traverse into each directory matching test*
-foreach (glob('test*', GLOB_ONLYDIR) as $dir)
+foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 {
 	$dir = basename($dir);
 	$i   = 1;
@@ -34,13 +34,13 @@ foreach (glob('test*', GLOB_ONLYDIR) as $dir)
 	while (file_exists(dirname(__FILE__) . '/' . $dir . '/data' . $i . '.txt') && file_exists(dirname(__FILE__) . '/' . $dir . '/reference' . $i . '.txt'))
 	{
 		/**
-		 * Create database table for each directory only if
+		 * Create database table for each test only if
 		 * data and reference files exist
 		 */
-		$query = "CREATE TABLE IF NOT EXISTS `test$i` (
+		$query = "CREATE TABLE IF NOT EXISTS `data$i` (
 					`id`        INT(11) NOT NULL AUTO_INCREMENT,
-					`test`      VARCHAR(255) DEFAULT '',
-					`data`      DECIMAL(8,2) DEFAULT 0,
+					`subject`      VARCHAR(255) DEFAULT '',
+					`attempt`      DECIMAL(8,2) DEFAULT 0,
 					`reference` DECIMAL(5,0) DEFAULT 0,
 					`variance`  DECIMAL(8,2) DEFAULT 0,
 					`success`   INT(11) DEFAULT 0,
@@ -62,46 +62,46 @@ foreach (glob('test*', GLOB_ONLYDIR) as $dir)
 		$data       = explode("\n", $data);
 		$references = explode("\n", $references);
 
-		foreach ($references as $reference)
+		foreach ($data as $datum)
 		{
 			$hit = null;
 
-			foreach ($data as $datum)
+			foreach ($references as $reference)
 			{
+
 				if (($datum > ($reference - 100)) && ($datum < ($reference + 100)))
 				{
 					$hit      = true;
 					$variance = $datum - $reference;
-
-					echo 'Hit: ' . $datum . '<br/>';
-					echo 'Reference: ' . $reference . '<br/>';
-					echo 'Variance: ' . $variance . '<br/><br/>';
-
-					$query = "INSERT INTO test$i
-					(`test`, `data`, `reference`, `variance`, `success`)
-					VALUES ('$dir', '$datum', '$reference', '$variance', '1');";
-					try
-					{
-						$st = $pdo->prepare($query);
-						$st->execute();
-					} catch (PDOException $e)
-					{
-						echo $e->getMessage();
-					};
-
 					break;
 				}
-				else
-				{
-					$query = "INSERT INTO test$i
-					(`test`, `data`)
-					VALUES ('$dir', '$datum');";
-				}
 			}
+
+			if ($hit)
+			{
+
+				$query = "INSERT INTO data$i
+				(`subject`, `attempt`, `reference`, `variance`, `success`)
+				VALUES ('$dir', '$datum', '$reference', '$variance', '1');";
+			}
+			else
+			{
+				$query = "INSERT INTO data$i
+				(`subject`, `attempt`)
+				VALUES ('$dir', '$datum');";
+			}
+
+			try
+			{
+				$st = $pdo->prepare($query);
+				$st->execute();
+			} catch (PDOException $e)
+			{
+				echo $e->getMessage();
+			};
 
 		}
 
 		$i++;
 	}
 }
-
