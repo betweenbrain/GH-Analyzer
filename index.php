@@ -48,14 +48,14 @@ foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 		$data       = explode("\n", $data);
 		$references = explode("\n", $references);
 
-		foreach ($data as $datum)
+		foreach ($data as $key => $datum)
 		{
 			$hit = null;
 
 			foreach ($references as $reference)
 			{
 
-				if (($datum > ($reference - 100)) && ($datum < ($reference + 100)))
+				if ((($datum > ($reference - 100)) && ($datum < ($reference + 100))) && ($data[$key + 1] > ($reference + 100)))
 				{
 					$hit      = true;
 					$variance = $datum - $reference;
