@@ -9,7 +9,6 @@
  * License    GNU GPL v3 or later
  */
 
-
 // Traverse into each directory matching test*
 foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 {
