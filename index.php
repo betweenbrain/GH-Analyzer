@@ -1,7 +1,7 @@
+#!/usr/bin/php
 <?php
-
 /**
- * File       index2.php
+ * File       index.php
  * Created    1/25/14 4:56 PM
  * Author     Matt Thomas | matt@betweenbrain.com | http://betweenbrain.com
  * Support    https://github.com/betweenbrain/
@@ -9,52 +9,39 @@
  * License    GNU GPL v3 or later
  */
 
-$host   = 'localhost';
-$dbname = 'gh-analyzer';
-$user   = 'root';
-$pass   = '';
-
-// Connect to databse
-try
-{
-	# MySQL with PDO_MYSQL
-	$pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-} catch (PDOException $e)
-{
-	echo $e->getMessage();
-}
 
 // Traverse into each directory matching test*
 foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 {
-	$dir = basename($dir);
-	$i   = 1;
+	$dir       = basename($dir);
+	$i         = 1;
+	$isNewFile = false;
 
 	// If data and reference file exists
-	while (file_exists(dirname(__FILE__) . '/' . $dir . '/data' . $i . '.txt') && file_exists(dirname(__FILE__) . '/' . $dir . '/reference' . $i . '.txt'))
+	while (
+		file_exists(dirname(__FILE__) . '/' . $dir . '/data' . $i . '.txt') &&
+		file_exists(dirname(__FILE__) . '/' . $dir . '/reference' . $i . '.txt')
+	)
 	{
-		/**
-		 * Create database table for each test only if
-		 * data and reference files exist
-		 */
-		$query = "CREATE TABLE IF NOT EXISTS `data$i` (
-					`id`        INT(11) NOT NULL AUTO_INCREMENT,
-					`subject`      VARCHAR(255) DEFAULT '',
-					`attempt`      DECIMAL(8,2) DEFAULT 0,
-					`reference` DECIMAL(5,0) DEFAULT 0,
-					`variance`  DECIMAL(8,2) DEFAULT 0,
-					`success`   INT(11) DEFAULT 0,
-					PRIMARY KEY (`id`)
-				) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
 
-		try
+		if (!file_exists("data$i.csv"))
 		{
-			$st = $pdo->prepare($query);
-			$st->execute();
-		} catch (PDOException $e)
+			$isNewFile = true;
+		}
+
+		// create a file pointer connected to the output stream
+		$output = fopen("data$i.csv", 'a');
+
+		// output the column headings
+		if ($isNewFile == true)
 		{
-			die('damn it!');
-			echo $e->getMessage();
+			fputcsv($output, array(
+					'subject',
+					'attempt',
+					'reference',
+					'variance',
+					'success')
+			);
 		}
 
 		$data       = file_get_contents($dir . '/data' . $i . '.txt');
@@ -79,27 +66,21 @@ foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 
 			if ($hit)
 			{
-
-				$query = "INSERT INTO data$i
-				(`subject`, `attempt`, `reference`, `variance`, `success`)
-				VALUES ('$dir', '$datum', '$reference', '$variance', '1');";
+				$row = array(
+					$dir,
+					$datum,
+					$reference,
+					$variance,
+					'1');
 			}
 			else
 			{
-				$query = "INSERT INTO data$i
-				(`subject`, `attempt`)
-				VALUES ('$dir', '$datum');";
+				$row = array(
+					$dir,
+					$datum);
 			}
 
-			try
-			{
-				$st = $pdo->prepare($query);
-				$st->execute();
-			} catch (PDOException $e)
-			{
-				echo $e->getMessage();
-			};
-
+			fputcsv($output, (array) $row);
 		}
 
 		$i++;
