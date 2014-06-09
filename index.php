@@ -12,9 +12,8 @@
 // Traverse into each directory matching test*
 foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 {
-	$dir       = basename($dir);
-	$i         = 1;
-	$isNewFile = false;
+	$dir = basename($dir);
+	$i   = 1;
 
 	// If data and reference file exists
 	while (
@@ -23,16 +22,11 @@ foreach (glob('subject*', GLOB_ONLYDIR) as $dir)
 	)
 	{
 
-		if (!file_exists("data$i.csv"))
-		{
-			$isNewFile = true;
-		}
-
 		// create a file pointer connected to the output stream
 		$output = fopen("data$i.csv", 'a');
 
 		// output the column headings
-		if ($isNewFile == true)
+		if (!file_exists("data$i.csv"))
 		{
 			fputcsv($output, array(
 					'subject',
